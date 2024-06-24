@@ -15,7 +15,7 @@ pipeline {
                         bat 'aws athena start-query-execution --query-string "CREATE DATABASE IF NOT EXISTS my_athena_db;" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1'
 
                         // Create Athena Table with Schema
-                        bat 'aws athena start-query-execution --query-string "CREATE EXTERNAL TABLE IF NOT EXISTS my_athena_db.salary_data (YearsExperience FLOAT, Salary FLOAT) ROW FORMAT SERDE \'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe\' WITH SERDEPROPERTIES (\'field.delim\' = \',\') STORED AS INPUTFORMAT \'org.apache.hadoop.mapred.TextInputFormat\' OUTPUTFORMAT \'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat\' LOCATION \'s3://athenajenkinstestbucket/salary_data/\';" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1'
+                        bat 'aws athena start-query-execution --query-string "CREATE EXTERNAL TABLE IF NOT EXISTS my_athena_db.salary_data (YearsExperience FLOAT, Salary FLOAT) ROW FORMAT SERDE \'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe\' WITH SERDEPROPERTIES (\'field.delim\' = \',\') STORED AS INPUTFORMAT \'org.apache.hadoop.mapred.TextInputFormat\' OUTPUTFORMAT \'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat\' LOCATION \'s3://athenajenkinstestbucket/salary_data.csv/\';" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1'
                     }
                 }
             }

@@ -18,6 +18,8 @@ aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
 # os.environ['AWS_ACCESS_KEY_ID'] = aws_access_key_id
 # os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
 os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'  # Replace 'us-east-1' with your region
+
+
 def run_query():
     client = boto3.client('athena')
 
@@ -38,20 +40,13 @@ def run_query():
 
     # Wait for the query to finish execution
     while True:
-        response = client.get_query_execution(QueryExecutionId=response['QueryExecutionId'])
+        response = client.get_query_execution(
+            QueryExecutionId=response['QueryExecutionId']
+        )
+        state = response['QueryExecution']['Status']['State']
+        print(f"Query state: {state}")
 
-        if response['QueryExecution']['Status']['State'] in ['SUCCEEDED', 'FAILED', 'CANCELLED']:
-            print('Query finished with status: ' + response['QueryExecution']['Status']['State'])
-            break
 
-        print('Query is still running')
-        time.sleep(5)  # wait for 5 seconds before checking the query status again
-
-    # If the query succeeded, print the results
-    if response['QueryExecution']['Status']['State'] == 'SUCCEEDED':
-        results = client.get_query_results(QueryExecutionId=response['QueryExecutionId'])
-        for row in results['ResultSet']['Rows']:
-            print(row)
 
 if __name__ == '__main__':
     run_query()

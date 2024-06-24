@@ -3,18 +3,35 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id_secret_text')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key_secret_text')
+        AWS_REGION = 'us-east-1'  // Specify your AWS region here
     }
     stages {
-        stage('Create Athena Database and Table') {
+        stage('Check and Create Athena Database') {
             steps {
                 withCredentials([string(credentialsId: 'aws-access-key-id_secret_text', variable: 'AWS_ACCESS_KEY_ID'),
                                  string(credentialsId: 'aws-secret-access-key_secret_text', variable: 'AWS_SECRET_ACCESS_KEY')]) {
                     script {
-                        // Create Athena Database
-                        bat 'aws athena start-query-execution --query-string "CREATE DATABASE my_athena_db;" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1'
+                        // Check if the database exists
+                        def dbCheckResult = bat(script: 'aws athena start-query-execution --query-string "SHOW DATABASES LIKE \'my_athena_db\';" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1', returnStdout: true).trim()
+                        def queryExecutionId = dbCheckResult.split(' ')[1].trim()
+                        bat "aws athena get-query-results --query-execution-id ${queryExecutionId} --region us-east-1 > db_check_result.json"
+                        def dbExists = readFile('db_check_result.json').contains('my_athena_db')
 
+                        // Create the database if it doesn't exist
+                        if (!dbExists) {
+                            bat 'aws athena start-query-execution --query-string "CREATE DATABASE my_athena_db;" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1'
+                        }
+                    }
+                }
+            }
+        }
+        stage('Create Athena Table') {
+            steps {
+                withCredentials([string(credentialsId: 'aws-access-key-id_secret_text', variable: 'AWS_ACCESS_KEY_ID'),
+                                 string(credentialsId: 'aws-secret-access-key_secret_text', variable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    script {
                         // Create Athena Table with Schema
-                        bat 'aws athena start-query-execution --query-string "CREATE EXTERNAL TABLE my_athena_db.salary_data (YearsExperience FLOAT, Salary FLOAT) ROW FORMAT SERDE \'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe\' WITH SERDEPROPERTIES (\'field.delim\' = \',\') STORED AS INPUTFORMAT \'org.apache.hadoop.mapred.TextInputFormat\' OUTPUTFORMAT \'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat\' LOCATION \'s3://athenajenkinstestbucket/Salary_Data.csv\';" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1'
+                        bat 'aws athena start-query-execution --query-string "CREATE EXTERNAL TABLE IF NOT EXISTS my_athena_db.salary_data (YearsExperience FLOAT, Salary FLOAT) ROW FORMAT SERDE \'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe\' WITH SERDEPROPERTIES (\'field.delim\' = \',\') STORED AS INPUTFORMAT \'org.apache.hadoop.mapred.TextInputFormat\' OUTPUTFORMAT \'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat\' LOCATION \'s3://athenajenkinstestbucket/Salary_Data.csv\';" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1'
                     }
                 }
             }

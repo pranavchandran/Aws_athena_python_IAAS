@@ -1,7 +1,9 @@
+AWSTemplateFormatVersion: '2010-09-09'
 Resources:
   AthenaDatabase:
     Type: AWS::Glue::Database
     Properties:
+      CatalogId: !Ref "AWS::AccountId"
       DatabaseInput:
         Name: my_athena_db
 
@@ -9,6 +11,7 @@ Resources:
     Type: AWS::Glue::Table
     Properties:
       DatabaseName: my_athena_db
+      CatalogId: !Ref "AWS::AccountId"
       TableInput:
         Name: salary_data
         StorageDescriptor:

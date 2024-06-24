@@ -14,9 +14,9 @@ Resources:
         StorageDescriptor:
           Columns:
             - Name: YearsExperience
-              Type: double
+              Type: float
             - Name: Salary
-              Type: double
+              Type: float
           Location: s3://athenajenkinstestbucket/Salary_Data.csv
           InputFormat: org.apache.hadoop.mapred.TextInputFormat
           OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat

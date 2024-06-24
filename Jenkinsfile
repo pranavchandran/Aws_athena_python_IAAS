@@ -50,6 +50,17 @@ pipeline {
                         echo "queryExecutionResult: ${queryExecutionResult}"
                         def queryExecutionId = queryExecutionResult.split('"QueryExecutionId": "')[1].split('"')[0]
                         echo "QueryExecutionId: ${queryExecutionId}"
+                        
+                        // Check query execution status
+                        def queryExecutionStatus = bat(script: "aws athena get-query-execution --query-execution-id ${queryExecutionId} --region us-east-1", returnStdout: true).trim()
+                        echo "queryExecutionStatus: ${queryExecutionStatus}"
+                        
+                        // Parse query execution status
+                        if (queryExecutionStatus.contains('"State": "FAILED"')) {
+                            error "Athena query execution failed. Please check the query and try again."
+                        }
+                        
+                        // Get query results
                         bat "aws athena get-query-results --query-execution-id ${queryExecutionId} --region us-east-1 > query_result.json"
                         def queryOutput = readFile('query_result.json')
                         echo "Query Output: ${queryOutput}"

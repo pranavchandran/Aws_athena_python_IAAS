@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id_secret_text_secret_text')
-        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key_secret_text_secret_text')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key_secret_text')
     }
     stages {
         stage('Create Glue Database and Table') {

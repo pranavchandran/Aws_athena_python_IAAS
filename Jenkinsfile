@@ -14,18 +14,13 @@ pipeline {
                         // Check if the database exists
                         def dbCheckResult = bat(script: 'aws athena start-query-execution --query-string "SHOW DATABASES LIKE \'my_athena_db\';" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1', returnStdout: true).trim()
                         echo "dbCheckResult: ${dbCheckResult}"
-                        
                         def queryExecutionId = dbCheckResult.split('"QueryExecutionId": "')[1].split('"')[0]
                         echo "QueryExecutionId: ${queryExecutionId}"
-                        
                         bat "aws athena get-query-results --query-execution-id ${queryExecutionId} --region us-east-1 > db_check_result.json"
-                        
                         def dbCheckOutput = readFile('db_check_result.json')
                         echo "dbCheckOutput: ${dbCheckOutput}"
-                        
                         def dbExists = dbCheckOutput.contains('my_athena_db')
                         echo "Database exists: ${dbExists}"
-
                         // Create the database if it doesn't exist
                         if (!dbExists) {
                             bat 'aws athena start-query-execution --query-string "CREATE DATABASE my_athena_db;" --result-configuration OutputLocation=s3://athenajenkinstestbucket/ --region us-east-1'
@@ -49,7 +44,16 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'aws-access-key-id_secret_text', variable: 'AWS_ACCESS_KEY_ID'),
                                  string(credentialsId: 'aws-secret-access-key_secret_text', variable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    bat 'python athena_iaas.py'
+                    script {
+                        // Run Athena Query and save the output as CSV
+                        def queryExecutionResult = bat(script: 'aws athena start-query-execution --query-string "SELECT * FROM my_athena_db.salary_data;" --result-configuration OutputLocation=s3://athenajenkinstestbucket/output/ --region us-east-1', returnStdout: true).trim()
+                        echo "queryExecutionResult: ${queryExecutionResult}"
+                        def queryExecutionId = queryExecutionResult.split('"QueryExecutionId": "')[1].split('"')[0]
+                        echo "QueryExecutionId: ${queryExecutionId}"
+                        bat "aws athena get-query-results --query-execution-id ${queryExecutionId} --region us-east-1 > query_result.json"
+                        def queryOutput = readFile('query_result.json')
+                        echo "Query Output: ${queryOutput}"
+                    }
                 }
             }
         }

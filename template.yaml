@@ -1,0 +1,26 @@
+Resources:
+  AthenaDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      DatabaseInput:
+        Name: my_athena_db
+
+  AthenaTable:
+    Type: AWS::Glue::Table
+    Properties:
+      DatabaseName: my_athena_db
+      TableInput:
+        Name: salary_data
+        StorageDescriptor:
+          Columns:
+            - Name: YearsExperience
+              Type: double
+            - Name: Salary
+              Type: double
+          Location: s3://athenajenkinstestbucket/Salary_Data.csv
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+            Parameters:
+              field.delim: ","

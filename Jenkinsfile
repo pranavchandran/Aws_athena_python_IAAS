@@ -5,18 +5,16 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key_secret_text')
     }
     stages {
-        stage('Create Glue Database and Table') {
+        stage('Create Athena Database and Table') {
             steps {
                 withCredentials([string(credentialsId: 'aws-access-key-id_secret_text', variable: 'AWS_ACCESS_KEY_ID'),
                                  string(credentialsId: 'aws-secret-access-key_secret_text', variable: 'AWS_SECRET_ACCESS_KEY')]) {
                     script {
-                        def stackExists = bat(script: 'aws cloudformation describe-stacks --stack-name my-glue-database-table-stack --region us-east-1', returnStatus: true) == 0
-                        if (stackExists) {
-                            bat 'aws cloudformation delete-stack --stack-name my-glue-database-table-stack --region us-east-1'
-                            bat 'aws cloudformation wait stack-delete-complete --stack-name my-glue-database-table-stack --region us-east-1'
-                        }
-                        bat 'aws cloudformation create-stack --stack-name my-glue-database-table-stack --template-body file://template.yaml --region us-east-1'
-                        bat 'aws cloudformation wait stack-create-complete --stack-name my-glue-database-table-stack --region us-east-1'
+                        // Create Athena Database
+                        bat 'aws athena start-query-execution --query-string "CREATE DATABASE my_athena_db;" --result-configuration OutputLocation=s3://athenajenkinstestbucket/'
+
+                        // Create Athena Table with Schema
+                        bat 'aws athena start-query-execution --query-string "CREATE EXTERNAL TABLE my_athena_db.salary_data (YearsExperience FLOAT, Salary FLOAT) ROW FORMAT SERDE \'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe\' WITH SERDEPROPERTIES (\'field.delim\' = \',\') STORED AS INPUTFORMAT \'org.apache.hadoop.mapred.TextInputFormat\' OUTPUTFORMAT \'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat\' LOCATION \'s3://athenajenkinstestbucket/Salary_Data.csv\';" --result-configuration OutputLocation=s3://s3://athenajenkinstestbucket/'
                     }
                 }
             }

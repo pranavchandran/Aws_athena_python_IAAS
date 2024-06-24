@@ -1,13 +1,13 @@
 pipeline {
     agent any
     environment {
-        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id_secret_text')
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id_secret_text_secret_text')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key_secret_text')
     }
     stages {
         stage('Create Glue Database and Table') {
             steps {
-                withCredentials([string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                withCredentials([string(credentialsId: 'aws-access-key-id_secret_text', variable: 'AWS_ACCESS_KEY_ID'),
                                  string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')]) {
                     script {
                         def stackExists = bat(script: 'aws cloudformation describe-stacks --stack-name my-glue-database-table-stack --region us-east-1', returnStatus: true) == 0
@@ -23,7 +23,7 @@ pipeline {
         }
         stage('Run Athena Query') {
             steps {
-                withCredentials([string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                withCredentials([string(credentialsId: 'aws-access-key-id_secret_text', variable: 'AWS_ACCESS_KEY_ID'),
                                  string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')]) {
                     bat 'python athena_iaas.py'
                 }
